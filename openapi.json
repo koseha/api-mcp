@@ -1,0 +1,63 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Swagger Petstore - OpenAPI 3.0",
+    "version": "1.0.11"
+  },
+  "servers": [
+    {
+      "url": "https://petstore3.swagger.io/api/v3"
+    }
+  ],
+  "tags": [
+    {
+      "name": "pet",
+      "description": "당신의 애완동물에 대한 모든 것"
+    }
+  ],
+  "paths": {
+    "/pet/{petId}/uploadImage": {
+      "post": {
+        "tags": ["pet"],
+        "summary": "이미지를 업로드합니다.",
+        "operationId": "uploadFile",
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "description": "업데이트할 애완동물 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "additionalMetadata",
+            "in": "query",
+            "description": "추가 메타데이터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "성공적인 작업"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,39 +1,17 @@
-import {
-  McpServer,
-  ResourceTemplate,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
+/**
+ * MCP 서버 엔트리포인트
+ */
+
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
+
+import { createServer } from "./server.js";
+import { registerTools } from "./tools/index.js";
+import { registerResources } from "./resources/index.js";
 
 async function main() {
-  const server = new McpServer({
-    name: "api-mcp",
-    version: "1.0.0",
-  });
-
-  server.registerTool(
-    "add",
-    {
-      title: "Addition Tool",
-      description: "Add two numbers",
-      inputSchema: { a: z.number(), b: z.number() },
-    },
-    async ({ a, b }) => ({
-      content: [{ type: "text", text: String(a + b) }],
-    })
-  );
-
-  server.registerResource(
-    "greeting",
-    new ResourceTemplate("greeting://{name}", { list: undefined }),
-    {
-      title: "Greeting Resource",
-      description: "Dynamic greeting generator",
-    },
-    async (uri, { name }) => ({
-      contents: [{ uri: uri.href, text: `Hello, ${name}!` }],
-    })
-  );
+  const server = createServer();
+  registerTools(server);
+  registerResources(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
