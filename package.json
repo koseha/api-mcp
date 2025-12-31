@@ -1,6 +1,6 @@
 {
   "name": "@koseha/api-mcp",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "description": "An API MCP based on Swagger docs",
   "keywords": [],
   "homepage": "https://github.com/koseha/api-mcp#readme",
@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1",
-    "yaml": "^2.8.2",
     "zod": "^4.2.1"
   },
   "devDependencies": {

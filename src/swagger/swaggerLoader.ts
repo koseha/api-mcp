@@ -10,7 +10,7 @@ const __dirname = dirname(__filename);
 
 let cache: any = null;
 let cachedAt = 0;
-const TTL = 5 * 60 * 1000;
+const TTL = 5 * 60 * 1000; // 5분
 
 export async function loadSwagger() {
   if (cache && Date.now() - cachedAt < TTL) {
