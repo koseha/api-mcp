@@ -45,7 +45,10 @@ Cursor 설정 파일에 추가:
   "mcpServers": {
     "api-mcp": {
       "command": "node",
-      "args": ["./node_modules/@koseha/api-mcp/dist/index.js"]
+      "args": ["./node_modules/@koseha/api-mcp/dist/index.js"],
+      "env": {
+        "OPENAPI_URL": <your swagger.json url ex.'https://petstore3.swagger.io/api/v3/openapi.json'>
+      }
     }
   }
 }
@@ -75,7 +78,10 @@ Claude Desktop 설정 파일에 추가:
   "mcpServers": {
     "api-mcp": {
       "command": "npx",
-      "args": ["-y", "@koseha/api-mcp"]
+      "args": ["-y", "@koseha/api-mcp"],
+      "env": {
+        "OPENAPI_URL": "https://api.example.com/openapi.json"
+      }
     }
   }
 }
@@ -88,7 +94,10 @@ Claude Desktop 설정 파일에 추가:
   "mcpServers": {
     "api-mcp": {
       "command": "node",
-      "args": ["/path/to/api-mcp/dist/index.js"]
+      "args": ["/path/to/api-mcp/dist/index.js"],
+      "env": {
+        "OPENAPI_URL": "https://api.example.com/openapi.json"
+      }
     }
   }
 }
@@ -203,8 +212,11 @@ api-mcp/
 │   ├── resources/            # 리소스 모듈
 │   │   ├── index.ts
 │   │   └── greeting.resource.ts
-│   └── swagger/              # Swagger 로더
-│       └── swaggerLoader.ts
+│   └── swagger/              # Swagger 로더 및 변환기
+│       ├── swaggerLoader.ts
+│       ├── apiTransformer.ts
+│       ├── schemaResolver.ts
+│       └── types.ts
 ├── dist/                     # 빌드된 파일
 ├── openapi.json             # OpenAPI 스펙 파일
 ├── package.json
@@ -212,9 +224,15 @@ api-mcp/
 └── README.md
 ```
 
-## OpenAPI 스펙 파일
+## OpenAPI 스펙 설정
 
-프로젝트 루트의 `openapi.json` 파일을 수정하여 사용할 API 스펙을 설정할 수 있습니다. 기본적으로 5분간 캐시되며, 파일 변경 시 자동으로 다시 로드됩니다.
+`OPENAPI_URL` 환경 변수를 통해 OpenAPI 문서의 URL을 설정해야 합니다. 서버 시작 시 이 환경 변수가 설정되지 않으면 서버가 시작되지 않습니다.
+
+예시:
+
+```bash
+export OPENAPI_URL=https://api.example.com/openapi.json
+```
 
 ## 의존성
 
@@ -231,7 +249,15 @@ api-mcp/
 
 ## 버전
 
-현재 버전: **0.0.7**
+현재 버전: **0.0.10**
+
+## History
+
+| 버전       | 날짜           | 변경사항                                                                                                                                                |
+| ---------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.0.10     | KST 2025.12.31 | - OpenAPI 문서를 HTTP 요청으로 로드하도록 변경 <br/> - OPENAPI_URL 환경 변수 필수 검증 추가 <br/> - API 상세 조회 로직 리팩토링 (apiTransformer 모듈화) |
+| 0.0.7      | KST 2025.12.31 | - tool 요청 시 openapi.json 문서의 특정 부분만 추출하여 사용하도록 변경 <br/> >> 전체 openapi.json 문서 내용이 사용되지 않도록 함.                      |
+| token 절약 |
 
 ## 라이선스
 
