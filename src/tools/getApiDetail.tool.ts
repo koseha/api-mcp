@@ -6,6 +6,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { loadSwagger } from "../swagger/swaggerLoader.js";
+import { transformApiDetail } from "../swagger/apiTransformer.js";
 
 export function registerGetApiDetail(server: McpServer) {
   server.registerTool(
@@ -26,61 +27,17 @@ export function registerGetApiDetail(server: McpServer) {
           ],
         };
       }
-      const swagger = await loadSwagger();
-      const api = swagger.paths?.[requestUrl]?.[httpMethod];
 
-      if (!api) {
+      const swagger = await loadSwagger();
+      const operation = swagger.paths?.[requestUrl]?.[httpMethod];
+
+      if (!operation) {
         return {
           content: [{ type: "text", text: "해당 API를 찾을 수 없습니다." }],
         };
       }
 
-      // parameters 변환
-      const parameters = (api.parameters || []).map((param: any) => ({
-        name: param.name,
-        in: param.in,
-        required: param.required || false,
-        schema: {
-          type: param.schema?.type || null,
-          format: param.schema?.format || null,
-          enum: param.schema?.enum || null,
-        },
-      }));
-
-      // requestBody 변환
-      let requestBody: any = null;
-      if (api.requestBody?.content) {
-        const jsonContent = api.requestBody.content["application/json"];
-        if (jsonContent?.schema) {
-          const schema = jsonContent.schema;
-          requestBody = {
-            required: schema.required || [],
-            type: schema.type || "object",
-            properties: schema.properties || {},
-          };
-        }
-      }
-
-      // responses 변환 (200 응답의 schema 추출)
-      let responses: any = null;
-      if (api.responses?.["200"]?.content?.["application/json"]?.schema) {
-        const schema = api.responses["200"].content["application/json"].schema;
-        responses = {
-          type: schema.type || "object",
-          properties: schema.properties || {},
-        };
-      }
-
-      const result: any = {};
-      if (parameters.length > 0) {
-        result.parameters = parameters;
-      }
-      if (requestBody) {
-        result.requestBody = requestBody;
-      }
-      if (responses) {
-        result.responses = responses;
-      }
+      const result = transformApiDetail(operation, swagger);
 
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
