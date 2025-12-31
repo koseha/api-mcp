@@ -1,53 +1,138 @@
 # API MCP 서버
 
-Model Context Protocol (MCP) 서버입니다. 다른 프로젝트나 MCP 클라이언트에서 도구와 리소스를 제공합니다.
+Swagger/OpenAPI 스펙 기반의 Model Context Protocol (MCP) 서버입니다. OpenAPI 문서를 통해 API 목록과 상세 정보를 조회할 수 있는 도구를 제공합니다.
 
 ## 기능
 
-- **도구 (Tools)**: `add` - 두 숫자를 더하는 도구
-- **리소스 (Resources)**: `greeting://{name}` - 동적 인사말 생성 리소스
+### 도구 (Tools)
 
-## 다른 프로젝트에서 사용하기
+- **`getApiList`** - API 목록 조회
 
-### 방법 1: NPM 패키지로 배포하기
+  - OpenAPI 스펙에서 모든 API 엔드포인트 목록을 조회합니다.
+  - 반환 형식: 각 경로별 HTTP 메서드와 `tags`, `operationId`, `summary` 정보
 
-#### 1단계: 패키지 빌드
+- **`getApiDetail`** - API 상세 조회
+  - 특정 API의 상세 정보를 조회합니다.
+  - 파라미터: `requestUrl` (string), `httpMethod` (get|post|put|delete|patch)
+  - 반환 형식: `parameters`, `requestBody`, `responses` 정보
 
-```bash
-npm run build
-```
+### 리소스 (Resources)
 
-#### 2단계: NPM에 배포 (선택사항)
+- **`greeting://{name}`** - 동적 인사말 생성 리소스
 
-```bash
-npm publish
-```
+## 설치
 
-또는 로컬 레지스트리나 private registry 사용
-
-#### 3단계: 다른 프로젝트에서 설치
+### NPM 패키지로 설치
 
 ```bash
-cd ../다른-프로젝트
-npm install api-mcp
+npm install @koseha/api-mcp
 ```
 
-#### 4단계: 실행 파일로 사용
+또는
 
-다른 프로젝트에서 직접 실행:
+```bash
+npm install @koseha/api-mcp@latest
+```
+
+## 사용 방법
+
+### 방법 1: Cursor IDE 에서 사용
+
+Cursor 설정 파일에 추가:
+
+```
+{
+  "mcpServers": {
+    "api-mcp": {
+      "command": "node",
+      "args": ["./node_modules/@koseha/api-mcp/dist/index.js"]
+    }
+  }
+}
+
+```
+
+### 방법 2: Claude Desktop에서 사용
+
+Claude Desktop 설정 파일에 추가:
+
+**macOS:**
+
+```
+~/Library/Application Support/Claude/claude_desktop_config.json
+```
+
+**Windows:**
+
+```
+%APPDATA%\Claude\claude_desktop_config.json
+```
+
+설정 예시:
+
+```json
+{
+  "mcpServers": {
+    "api-mcp": {
+      "command": "npx",
+      "args": ["-y", "@koseha/api-mcp"]
+    }
+  }
+}
+```
+
+또는 로컬 경로 사용:
+
+```json
+{
+  "mcpServers": {
+    "api-mcp": {
+      "command": "node",
+      "args": ["/path/to/api-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+### 방법 3: Node.js 프로젝트에서 직접 사용
 
 ```javascript
-import { spawn } from 'child_process';
-import { join } from 'path';
+import { spawn } from "child_process";
 
-const mcpServer = spawn('npx', ['api-mcp'], {
-  stdio: ['pipe', 'pipe', 'pipe']
+const mcpServer = spawn("npx", ["-y", "@koseha/api-mcp"], {
+  stdio: ["pipe", "pipe", "pipe"],
+});
+
+// JSON-RPC 요청 보내기
+function sendRequest(method, params) {
+  const request = {
+    jsonrpc: "2.0",
+    id: Date.now(),
+    method,
+    params: params || {},
+  };
+  mcpServer.stdin?.write(JSON.stringify(request) + "\n");
+}
+
+// API 목록 조회
+sendRequest("tools/call", {
+  name: "getApiList",
+  arguments: {},
+});
+
+// API 상세 조회
+sendRequest("tools/call", {
+  name: "getApiDetail",
+  arguments: {
+    requestUrl: "/pet/{petId}/uploadImage",
+    httpMethod: "post",
+  },
 });
 ```
 
-### 방법 2: 로컬 패키지로 사용 (개발 중)
+### 방법 4: 로컬 개발 중 사용
 
-#### 1단계: npm link 설정
+#### npm link 사용
 
 현재 프로젝트에서:
 
@@ -55,139 +140,36 @@ const mcpServer = spawn('npx', ['api-mcp'], {
 npm link
 ```
 
-#### 2단계: 다른 프로젝트에서 링크
-
 다른 프로젝트에서:
 
 ```bash
-cd ../다른-프로젝트
-npm link api-mcp
+npm link @koseha/api-mcp
 ```
 
-이제 다른 프로젝트에서 `npx api-mcp` 명령어를 사용할 수 있습니다.
-
-### 방법 3: 상대 경로로 사용
+#### 상대 경로 사용
 
 다른 프로젝트의 `package.json`에 추가:
 
 ```json
 {
   "dependencies": {
-    "api-mcp": "file:../api-mcp"
+    "@koseha/api-mcp": "file:../api-mcp"
   }
 }
 ```
 
-그런 다음:
+## 개발
+
+### 사전 요구사항
+
+- Node.js 18 이상
+- npm 또는 yarn
+
+### 설치
 
 ```bash
 npm install
 ```
-
-### 방법 4: MCP 클라이언트에서 사용 (Claude Desktop 등)
-
-#### Claude Desktop 설정
-
-`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) 또는 
-`%APPDATA%\Claude\claude_desktop_config.json` (Windows) 파일에 추가:
-
-```json
-{
-  "mcpServers": {
-    "api-mcp": {
-      "command": "node",
-      "args": ["C:/Users/saems/Desktop/project/mcps/api-mcp/dist/index.js"]
-    }
-  }
-}
-```
-
-또는 글로벌 설치 후:
-
-```json
-{
-  "mcpServers": {
-    "api-mcp": {
-      "command": "npx",
-      "args": ["-y", "api-mcp"]
-    }
-  }
-}
-```
-
-### 방법 5: Node.js 프로젝트에서 직접 사용
-
-다른 Node.js 프로젝트에서:
-
-```javascript
-// client.js
-import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// MCP 서버 경로 (상대 또는 절대 경로)
-const serverPath = join(__dirname, '../api-mcp/dist/index.js');
-
-const mcpServer = spawn('node', [serverPath], {
-  stdio: ['pipe', 'pipe', 'pipe']
-});
-
-// JSON-RPC 요청 보내기
-function sendRequest(method, params) {
-  const request = {
-    jsonrpc: '2.0',
-    id: Date.now(),
-    method,
-    params: params || {}
-  };
-  mcpServer.stdin?.write(JSON.stringify(request) + '\n');
-}
-
-// 응답 수신
-let buffer = '';
-mcpServer.stdout?.on('data', (data) => {
-  buffer += data.toString();
-  const lines = buffer.split('\n');
-  buffer = lines.pop() || '';
-  
-  for (const line of lines) {
-    if (line.trim()) {
-      try {
-        const response = JSON.parse(line);
-        console.log('응답:', response);
-      } catch (e) {
-        // 파싱 오류 무시
-      }
-    }
-  }
-});
-
-// 초기화
-sendRequest('initialize', {
-  protocolVersion: '2024-11-05',
-  capabilities: {
-    tools: {},
-    resources: {}
-  },
-  clientInfo: {
-    name: 'my-client',
-    version: '1.0.0'
-  }
-});
-
-// 도구 호출 예시
-setTimeout(() => {
-  sendRequest('tools/call', {
-    name: 'add',
-    arguments: { a: 5, b: 3 }
-  });
-}, 1000);
-```
-
-## 개발
 
 ### 빌드
 
@@ -201,10 +183,10 @@ npm run build
 npm start
 ```
 
-### 테스트 클라이언트 실행
+또는 개발 모드:
 
 ```bash
-node test-client.js
+npm run dev
 ```
 
 ## 프로젝트 구조
@@ -212,24 +194,55 @@ node test-client.js
 ```
 api-mcp/
 ├── src/
-│   ├── index.ts          # MCP 서버 메인 파일
-│   └── tools/
-│       └── listEndpoints.ts
-├── dist/
-│   └── index.js          # 빌드된 파일
+│   ├── index.ts              # MCP 서버 엔트리포인트
+│   ├── server.ts             # 서버 생성 로직
+│   ├── tools/                # 도구 모듈
+│   │   ├── index.ts
+│   │   ├── getApiList.tool.ts    # API 목록 조회 도구
+│   │   └── getApiDetail.tool.ts  # API 상세 조회 도구
+│   ├── resources/            # 리소스 모듈
+│   │   ├── index.ts
+│   │   └── greeting.resource.ts
+│   └── swagger/              # Swagger 로더
+│       └── swaggerLoader.ts
+├── dist/                     # 빌드된 파일
+├── openapi.json             # OpenAPI 스펙 파일
 ├── package.json
+├── tsconfig.json
 └── README.md
 ```
 
+## OpenAPI 스펙 파일
+
+프로젝트 루트의 `openapi.json` 파일을 수정하여 사용할 API 스펙을 설정할 수 있습니다. 기본적으로 5분간 캐시되며, 파일 변경 시 자동으로 다시 로드됩니다.
+
 ## 의존성
 
-- `@modelcontextprotocol/sdk`: MCP SDK
-- `zod`: 스키마 검증
-- `typescript`: 타입스크립트 컴파일러
+### 프로덕션 의존성
+
+- `@modelcontextprotocol/sdk`: MCP SDK (^1.25.1)
+- `zod`: 스키마 검증 (^4.2.1)
+
+### 개발 의존성
+
+- `typescript`: 타입스크립트 컴파일러 (^5.9.3)
+- `@types/node`: Node.js 타입 정의 (^25.0.3)
+- `ts-node`: TypeScript 실행 도구 (^10.9.2)
+
+## 버전
+
+현재 버전: **0.0.7**
+
+## 라이선스
+
+ISC
 
 ## 참고 자료
 
 - [MCP 공식 문서](https://modelcontextprotocol.io)
 - [MCP SDK GitHub](https://github.com/modelcontextprotocol/typescript-sdk)
+- [OpenAPI 스펙](https://swagger.io/specification/)
 
+## 기여
 
+이슈나 풀 리퀘스트는 [GitHub 저장소](https://github.com/koseha/api-mcp)에서 환영합니다.
