@@ -1,6 +1,6 @@
 {
   "name": "@koseha/api-mcp",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "An API MCP based on Swagger docs",
   "keywords": [],
   "homepage": "https://github.com/koseha/api-mcp#readme",
